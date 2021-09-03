@@ -1,0 +1,8 @@
+#ifndef _CCORERPCSERVERCOMMANDSDEFINITIONS_H_
+#define _CCORERPCSERVERCOMMANDSDEFINITIONS_H_
+struct CCOMMAND_RPC_GET_RANDOM_OUTPUTS_FOR_AMOUNTS_outs_for_amount {
+   uint64_t amount;
+   CryptoNote::COMMAND_RPC_GET_RANDOM_OUTPUTS_FOR_AMOUNTS_out_entry* outs;
+   uint64_t outsCount;
+};
+#endif
