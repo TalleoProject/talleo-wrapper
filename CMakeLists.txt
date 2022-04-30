@@ -24,7 +24,22 @@ if(CMAKE_TOOLCHAIN_FILE)
 endif()
 message("System: ${CMAKE_SYSTEM_NAME}")
 message("Processor: ${CMAKE_SYSTEM_PROCESSOR}")
-message("Config: ${CMAKE_BUILD_TYPE}")
+
+if(CMAKE_SYSTEM_NAME MATCHES "kFreeBSD.*|FreeBSD")
+  set(FREEBSD TRUE)
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "DragonFly.*")
+  set(DRAGONFLY TRUE)
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "kOpenBSD.*|OpenBSD.*")
+  set(OPENBSD TRUE)
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "NetBSD")
+  set(NETBSD TRUE)
+endif()
 
 if(MSVC)
   add_definitions("-EHsc" "-DWIN32" "-DBUILD_DLL")
@@ -39,6 +54,12 @@ elseif(APPLE)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -fvisibility=hidden")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fvisibility=hidden")
   include_directories(${CMAKE_SOURCE_DIR}/cryptonote/src/Platform/OSX)
+  include_directories(${CMAKE_SOURCE_DIR}/cryptonote/src/Platform/Posix)
+elseif(FREEBSD OR NETBSD OR OPENBSD)
+  add_definitions("-DBSD" "-DPOSIX" "-DBUILD_DLL")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -fvisibility=hidden")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fvisibility=hidden")
+  include_directories(${CMAKE_SOURCE_DIR}/cryptonote/src/Platform/FreeBSD)
   include_directories(${CMAKE_SOURCE_DIR}/cryptonote/src/Platform/Posix)
 elseif(ANDROID)
   add_definitions("-DANDROID" "-DPOSIX" "-DBUILD_DLL")
@@ -61,6 +82,39 @@ else()
   include_directories(${CMAKE_SOURCE_DIR}/cryptonote/external/rocksdb/include)
 endif()
 
+# Force find_package(OpenSSL) to search the static library
+if(STATIC)
+  set(OPENSSL_USE_STATIC_LIBS ON)
+endif()
+if(MSVC)
+  set(OPENSSL_MSVC_STATIC_RT ON)
+endif()
+
+# We have to look for Homebrew OpenSSL a bit differently
+# Borrowed from https://github.com/tarantool/tarantool/commit/6eab201af1843f53a833c8928dc58fceffa08147
+if(APPLE)
+  find_program(HOMEBREW_EXECUTABLE brew)
+  execute_process(COMMAND ${HOMEBREW_EXECUTABLE} --prefix openssl
+    OUTPUT_VARIABLE HOMEBREW_OPENSSL
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(DEFINED HOMEBREW_OPENSSL)
+    if(NOT DEFINED OPENSSL_ROOT_DIR)
+      message(STATUS "Setting OpenSSL root to ${HOMEBREW_OPENSSL}")
+      set(OPENSSL_ROOT_DIR "${HOMEBREW_OPENSSL}")
+    endif()
+  endif()
+endif()
+
+find_package(OpenSSL)
+
+if(NOT OPENSSL_FOUND)
+    find_package(PkgConfig)
+
+    if(PKG_CONFIG_FOUND)
+        pkg_search_module(OPENSSL openssl)
+    endif()
+endif()
+
 add_subdirectory(cryptonote EXCLUDE_FROM_ALL)
 
 include_directories(include cryptonote cryptonote/include cryptonote/src ${Boost_INCLUDE_DIR})
@@ -73,4 +127,17 @@ if(ANDROID)
 target_link_libraries(TalleoWrapper Common CryptoNoteCore Http Logging Mnemonics NodeRpcProxy Rpc System Wallet Transfers AndroidCompat)
 else()
 target_link_libraries(TalleoWrapper Common CryptoNoteCore Http Logging Mnemonics NodeRpcProxy Rpc System Wallet Transfers)
+endif()
+
+target_link_libraries(TalleoWrapper ${OPENSSL_LIBRARIES})
+if(OPENSSL_FOUND)
+  if(NOT MSVC AND NOT NETBSD)
+    set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};dl")
+  endif()
+
+  target_link_libraries(TalleoWrapper ${OPENSSL_LIBRARIES})
+  # prevent error LNK2019: unresolved external symbol _vsnprintf
+  if(MSVC AND NOT (MSVC_VERSION LESS 1900))
+    target_link_libraries(TalleoWrapper "legacy_stdio_definitions.lib")
+  endif()
 endif()

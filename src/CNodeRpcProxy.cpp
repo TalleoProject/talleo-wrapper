@@ -12,8 +12,8 @@
 #include <system_error>
 
 /* Constructor */
-void* NodeRpcProxy_Create(const char* nodeHost, unsigned short nodePort, void* logger) {
-   return new CryptoNote::NodeRpcProxy(nodeHost, nodePort, *static_cast<Logging::ILogger*>(logger));
+void* NodeRpcProxy_Create(const char* nodeHost, unsigned short nodePort, const char* nodePath, const bool& useSSL, void* logger) {
+   return new CryptoNote::NodeRpcProxy(nodeHost, nodePort, nodePath, useSSL, *static_cast<Logging::ILogger*>(logger));
 }
 
 /* Destructor */

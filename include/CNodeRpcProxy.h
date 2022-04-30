@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
    /* Constructor */
-   void* NodeRpcProxy_Create(const char* nodeHost, unsigned short nodePort, void* logger);
+   void* NodeRpcProxy_Create(const char* nodeHost, unsigned short nodePort, const char* nodePath, const bool& useSSL, void* logger);
 
    /* Destructor */
    void NodeRpcProxy_Destroy(void* proxy);
