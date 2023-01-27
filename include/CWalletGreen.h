@@ -15,6 +15,7 @@ extern "C" {
    EXPORT void WalletGreen_initializeWithViewKey(void* wallet, const char* path, const char* password, const Crypto::SecretKey& viewSecretKey);
    EXPORT void WalletGreen_load(void* wallet, const char* path, const char* password);
    EXPORT void WalletGreen_loadWithExtra(void* wallet, const char* path, const char* password, const char* extra);
+   EXPORT void WalletGreen_repair(void* wallet);
    EXPORT void WalletGreen_shutdown(void* wallet);
 
    EXPORT void WalletGreen_changePassword(void* wallet, const char* oldPassword, const char* newPassword);

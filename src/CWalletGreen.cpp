@@ -38,6 +38,10 @@ void WalletGreen_load(void* wallet, const char* path, const char* password) {
    static_cast<CryptoNote::WalletGreen*>(wallet)->load(path, password);
 }
 
+void WalletGreen_repair(void* wallet) {
+   static_cast<CryptoNote::WalletGreen*>(wallet)->repair();
+}
+
 void WalletGreen_shutdown(void* wallet) {
    static_cast<CryptoNote::WalletGreen*>(wallet)->shutdown();
 }
